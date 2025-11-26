@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "integrations-engineering-code-assesment"
+version = "0.1.0"
+description = "Async Python project for bidirectional workorder integration between systems"
+authors = ["Your Name <you@example.com>"]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.11,<3.12"
+python-decouple = "3.8"
+loguru = "^0.7.2"
+motor = "^3.1.1"            # Async MongoDB driver
+pytest = "^7.4.0"
+
+[tool.poetry.group.formatting.dependencies]
+black = "^23.3.0"
+
+[tool.black]
+line-length = 88
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | _build
+)/
+'''

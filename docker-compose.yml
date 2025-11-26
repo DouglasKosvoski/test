@@ -1,0 +1,14 @@
+services:
+  mongo:
+    image: mongo:5.0
+    container_name: tractian-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      # optional: create a default database
+      MONGO_INITDB_DATABASE: tractian
+
+volumes:
+  mongo-data:
