@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "integrations-engineering-code-assesment"
+name = "integrations-engineering-code-assessment"
 version = "0.1.0"
 description = "Async Python project for bidirectional workorder integration between systems"
-authors = ["Your Name <you@example.com>"]
+authors = ["Douglas Kosvoski <douglas.contactpro@gmail.com>"]
 package-mode = false
 
 [build-system]

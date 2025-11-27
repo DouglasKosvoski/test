@@ -6,9 +6,35 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-    environment:
-      # optional: create a default database
-      MONGO_INITDB_DATABASE: tractian
+    env_file:
+      - .env
+    networks:
+      - tractian-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/tractian --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  python-dev:
+    build:
+      context: .
+      target: development
+    container_name: python-dev
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - tractian-network
+    command: ["tail", "-f", "/dev/null"]
 
 volumes:
   mongo-data:
+
+networks:
+  tractian-network:
+    driver: bridge
