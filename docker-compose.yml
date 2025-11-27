@@ -16,11 +16,11 @@ services:
       timeout: 5s
       retries: 5
 
-  python-dev:
+  app:
     build:
       context: .
       target: development
-    container_name: python-dev
+    container_name: app
     volumes:
       - ./:/app
     env_file:
