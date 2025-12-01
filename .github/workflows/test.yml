@@ -1,6 +1,10 @@
-name: Tests (Python, MongoDB)
+name: Tests
 
-on: [pull_request]
+on:
+  push:
+    branches: [main, stage, dev]
+  pull_request:
+    branches: [main, stage, dev]
 
 jobs:
   test:
