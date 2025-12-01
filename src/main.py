@@ -2,8 +2,8 @@
 
 import asyncio
 from loguru import logger
-from integration.inbound.inbound_handler import InboundHandler
-from integration.outbound.outbound_handler import OutboundHandler
+from integration.flows.client_to_tracos import ClientToTracOSFlow
+from integration.flows.tracos_to_client import TracOSToClientFlow
 from os import getenv
 from pathlib import Path
 
@@ -15,11 +15,13 @@ OUTBOUND_DATA_DIR = Path(getenv("OUTBOUND_DATA_DIR"))
 async def main():
     logger.info("Starting TracOS ↔ Client Integration Flow")
 
-    inbound_handler = InboundHandler()
-    inbound_handler.sync_with_tracOS(INBOUND_DATA_DIR)
+    # Sync client data to TracOS
+    client_to_tracos_flow = ClientToTracOSFlow()
+    await client_to_tracos_flow.sync(INBOUND_DATA_DIR)
 
-    outbound_handler = OutboundHandler()
-    await outbound_handler.sync_with_client(OUTBOUND_DATA_DIR)
+    # Sync TracOS data to client
+    tracos_to_client_flow = TracOSToClientFlow()
+    await tracos_to_client_flow.sync(OUTBOUND_DATA_DIR)
 
     logger.info("Finished integration!")
 

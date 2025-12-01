@@ -1,27 +1,14 @@
+# Read JSON from inbound, write to outbound
 from loguru import logger  # pyright: ignore[reportMissingImports]
 from os import getenv
-from helpers.directory import list_json_files_in_directory
-from helpers.json import read_json_from_file
+from adapters.filesystem import list_json_files_in_directory, read_json_from_file
 from os import path
 from pathlib import Path
 
-class InboundHandler:
+
+class ClientRepository:
     def __init__(self):
-        logger.info("InboundHandler module initialized")
-
-
-    def sync_with_tracOS(self, directory_path: Path):
-        logger.info(f"Syncing Inbound data with TracOS...")
-
-        workorders = self.find_workorders(directory_path)
-        workorders = workorders[:1]
-
-        logger.info(f"Found {len(workorders)} workorders in '{directory_path}'")
-
-        for workorder in workorders:
-            validated_workorder = self.validate_workorder(workorder)
-            self.save_workorder_to_database(validated_workorder)
-
+        logger.info("ClientRepository module initialized")
 
     def find_workorders(self, directory_path: str):
         logger.info(f"Getting workorders from '{directory_path}'")
@@ -35,7 +22,6 @@ class InboundHandler:
             workorders.append(read_json_from_file(json_file_path))
 
         return workorders
-
 
     def validate_workorder(self, workorder: dict):
         # {
@@ -58,20 +44,3 @@ class InboundHandler:
         validated_workorder = workorder.copy()
 
         return validated_workorder
-
-
-    def save_workorder_to_database(self, workorder: dict):
-        DATABASE_DRIVER = getenv("DATABASE_DRIVER")
-
-        if DATABASE_DRIVER is None:
-            raise ValueError("DATABASE_DRIVER is not set")
-
-        if DATABASE_DRIVER == "mongodb":
-            self.save_workorder_to_mongodb(workorder)
-        else:
-            raise ValueError(f"Unsupported database driver: {DATABASE_DRIVER}")
-
-
-    def save_workorder_to_mongodb(self, workorder: dict):
-        # TODO: save the workorder to MongoDB
-        pass
