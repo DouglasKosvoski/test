@@ -45,7 +45,6 @@ async def get_mongodb_connection() -> AsyncIOMotorDatabase:
 
 async def get_mongodb_connection_with_retry() -> AsyncIOMotorDatabase:
     """Get MongoDB connection with retry logic."""
-    last_error = None
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -53,14 +52,13 @@ async def get_mongodb_connection_with_retry() -> AsyncIOMotorDatabase:
             # Verify connection
             await database.command("ping")
             return database
-        except Exception as e:
-            last_error = e
-            logger.warning(f"MongoDB connection attempt {attempt}/{MAX_RETRIES} failed: {e}")
+        except Exception:
+            logger.warning(f"MongoDB connection attempt {attempt}/{MAX_RETRIES} failed")
 
             if attempt < MAX_RETRIES:
                 await asyncio.sleep(RETRY_DELAY_SECONDS)
 
-    raise ConnectionError(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts: {last_error}")
+    raise ConnectionError(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts")
 
 
 def get_collection(database: AsyncIOMotorDatabase, collection_name: str) -> AsyncIOMotorCollection:

@@ -57,16 +57,39 @@ def read_json_from_file(file_path: str | Path) -> Any:
 
 
 def write_json_to_file(file_path: str | Path, data: Any) -> None:
-    """Write JSON data to a file, ensuring the directory exists."""
-    path = Path(file_path)
+    """
+    Write JSON data to a file, ensuring the directory exists.
 
-    if not path.parent.exists():
-        os.makedirs(path.parent, exist_ok=True)
+    Raises:
+        PermissionError: if the file cannot be written due to permissions.
+        OSError: if the file cannot be written due to other I/O errors.
+        TypeError: if the data is not JSON serializable.
+    """
+    file_path_obj = Path(file_path)
 
-    # Optional: atomic write to avoid corrupted files
-    temp_path = path.with_suffix(path.suffix + ".tmp")
+    if not file_path_obj.parent.exists():
+        os.makedirs(file_path_obj.parent, exist_ok=True)
 
-    with temp_path.open("w", encoding="utf-8") as file:
-        json.dump(data, file, indent=2, ensure_ascii=False)
+    # Atomic write to avoid corrupted files
+    temp_path = file_path_obj.with_suffix(file_path_obj.suffix + ".tmp")
 
-    temp_path.replace(path)
+    try:
+        with temp_path.open("w", encoding="utf-8") as file:
+            json.dump(data, file, indent=2, ensure_ascii=False)
+        temp_path.replace(file_path_obj)
+    except (PermissionError, OSError):
+        # Clean up temp file if it exists
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        raise
+    except TypeError as e:
+        # Data is not JSON serializable - clean up and raise
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        raise TypeError(f"Data is not JSON serializable") from e

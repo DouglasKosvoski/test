@@ -2,6 +2,7 @@
 
 """Entrypoint for the application."""
 
+import sys
 import asyncio
 from loguru import logger
 from integration.flows.client_to_tracos import ClientToTracOSFlow
@@ -24,15 +25,25 @@ async def main():
 
     logger.success("Starting TracOS ↔ Client Integration Flow")
 
-    # Sync client data to TracOS
-    client_to_tracos_flow = ClientToTracOSFlow()
-    await client_to_tracos_flow.sync(DATA_INBOUND_DIR)
+    try:
+        # Sync client data to TracOS
+        client_to_tracos_flow = ClientToTracOSFlow()
+        await client_to_tracos_flow.sync(DATA_INBOUND_DIR)
 
-    # Sync TracOS data to client
-    tracos_to_client_flow = TracOSToClientFlow()
-    await tracos_to_client_flow.sync(DATA_OUTBOUND_DIR)
+        # Sync TracOS data to client
+        tracos_to_client_flow = TracOSToClientFlow()
+        await tracos_to_client_flow.sync(DATA_OUTBOUND_DIR)
 
-    logger.success("Finished integration!")
+        logger.success("Finished integration!")
+    except ConnectionError:
+        logger.error("Unable to connect to the database. Please check your connection settings.")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        logger.warning("Integration interrupted by user")
+        sys.exit(0)
+    except Exception:
+        logger.error("An unexpected error occurred during integration")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

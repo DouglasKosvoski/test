@@ -13,17 +13,29 @@ class ClientToTracOSFlow:
     async def sync(self, directory_path: Path):
         logger.info("Syncing Client data with TracOS...")
 
-        workorders = self.client_repository.find_workorders(str(directory_path))
+        try:
+            workorders = self.client_repository.find_workorders(str(directory_path))
+        except FileNotFoundError:
+            logger.error(f"Inbound directory not found: '{directory_path}'")
+            return
+        except PermissionError:
+            logger.error(f"Permission denied accessing inbound directory: '{directory_path}'")
+            return
 
         logger.debug(f"Found {len(workorders)} workorders in '{directory_path}'")
 
         for workorder in workorders:
-            validated_workorder = self.client_repository.validate_workorder(workorder)
+            order_number = workorder.get('orderNo', 'unknown')
+            try:
+                validated_workorder = self.client_repository.validate_workorder(workorder)
 
-            if validated_workorder is None:
-                logger.warning(f"Workorder {workorder['orderNo']} is not valid")
+                if validated_workorder is None:
+                    logger.warning(f"Workorder {order_number} is not valid")
+                    continue
+
+                translated_workorder_into_tracos_format = translate_client_to_tracos(validated_workorder)
+
+                await self.tracos_repository.save_workorder(translated_workorder_into_tracos_format)
+            except Exception:
+                logger.error(f"Failed to process workorder {order_number}")
                 continue
-
-            translated_workorder_into_tracos_format = translate_client_to_tracos(validated_workorder)
-
-            await self.tracos_repository.save_workorder(translated_workorder_into_tracos_format)

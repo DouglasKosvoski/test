@@ -1,10 +1,11 @@
 # CRUD operations on TracOS (MongoDB)
 from loguru import logger  # pyright: ignore[reportMissingImports]
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from adapters.db import get_connection, get_collection
 from os import getenv
 from datetime import datetime, timezone
 from integration.types import TracOSWorkorder
+from pymongo.errors import PyMongoError
 
 
 class TracOSRepository:
@@ -13,36 +14,45 @@ class TracOSRepository:
 
     async def save_workorder(self, workorder: TracOSWorkorder) -> bool:
         """Save a workorder to the database."""
-        database = await get_connection()
-        collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
+        workorder_number = workorder.get("number", "unknown")
 
-        # Check if workorder with this number already exists
-        existing = await collection.find_one({"number": workorder.get("number")})
-        if existing:
-            should_update = self.should_update_workorder(existing, workorder)
-            if not should_update:
-                logger.debug(f"Workorder with number {workorder.get('number')} already exists and no changes to update")
+        try:
+            database = await get_connection()
+            collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
+
+            # Check if workorder with this number already exists
+            existing = await collection.find_one({"number": workorder.get("number")})
+            if existing:
+                should_update = self.should_update_workorder(existing, workorder)
+                if not should_update:
+                    logger.debug(f"Workorder {workorder_number} already exists with no changes")
+                    return True
+
+                # Update existing workorder, preserving the _id
+                updated_workorder = {
+                    **existing,
+                    **workorder
+                }
+
+                await collection.update_one(
+                    {"number": workorder.get("number")},
+                    {"$set": updated_workorder}
+                )
+
+                logger.debug(f"Updated workorder {workorder_number}")
                 return True
 
-            # Update existing workorder, preserving the _id
-            updated_workorder = {
-                **existing,
-                **workorder
-            }
+            # Insert the workorder
+            await collection.insert_one(workorder)
+            logger.debug(f"Saved workorder {workorder_number}")
 
-            result = await collection.update_one(
-                {"number": workorder.get("number")},
-                {"$set": updated_workorder}
-            )
-
-            logger.debug(f"Updated workorder with number {workorder.get('number')} (ID: {existing.get('_id')})")
             return True
-
-        # Insert the workorder
-        result = await collection.insert_one(workorder)
-        logger.debug(f"Saved workorder with ID: {result.inserted_id}")
-
-        return True
+        except ConnectionError:
+            # Re-raise connection errors to be handled at a higher level
+            raise
+        except PyMongoError:
+            logger.error(f"Database error while saving workorder {workorder_number}")
+            return False
 
     def should_update_workorder(self, existing: dict, workorder: dict) -> bool:
         """Check if a workorder should be updated.
@@ -72,32 +82,46 @@ class TracOSRepository:
 
     async def find_all_unsynced_workorders(self) -> AsyncGenerator[TracOSWorkorder, None]:
         """Find all unsynced workorders in the database."""
-        database = await get_connection()
-        collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
+        try:
+            database = await get_connection()
+            collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
 
-        query = {
-            "isSynced": { "$ne": True }
-        }
+            query = {
+                "isSynced": { "$ne": True }
+            }
 
-        cursor = collection.find(query)
-        async for doc in cursor:
-            yield doc
+            cursor = collection.find(query)
+            async for doc in cursor:
+                yield doc
+        except ConnectionError:
+            # Re-raise connection errors to be handled at a higher level
+            raise
+        except PyMongoError:
+            logger.error("Database error while fetching unsynced workorders")
+            return
 
 
     async def mark_workorder_as_synced(self, workorder_number: int) -> bool:
         """Mark a workorder as synced."""
-        database = await get_connection()
-        collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
+        try:
+            database = await get_connection()
+            collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
 
-        query = { "number": workorder_number }
-        values = { "$set": { "isSynced": True, "syncedAt": datetime.now(timezone.utc) }}
+            query = { "number": workorder_number }
+            values = { "$set": { "isSynced": True, "syncedAt": datetime.now(timezone.utc) }}
 
-        result = await collection.update_one(query, values)
-        success = result.modified_count > 0
+            result = await collection.update_one(query, values)
+            success = result.modified_count > 0
 
-        if success:
-            logger.debug(f"Marked workorder {workorder_number} as synced")
-        else:
-            logger.warning(f"Failed to mark workorder {workorder_number} as synced")
+            if success:
+                logger.debug(f"Marked workorder {workorder_number} as synced")
+            else:
+                logger.warning(f"Workorder {workorder_number} was not marked as synced")
 
-        return success
+            return success
+        except ConnectionError:
+            # Re-raise connection errors to be handled at a higher level
+            raise
+        except PyMongoError:
+            logger.error(f"Database error while marking workorder {workorder_number} as synced")
+            return False

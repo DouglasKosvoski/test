@@ -1,10 +1,12 @@
 # Read JSON from inbound, write to outbound
+import json
+
 from loguru import logger  # pyright: ignore[reportMissingImports]
 from adapters.filesystem import list_json_files_in_directory, read_json_from_file
 from os import path
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from integration.types import ClientWorkorder
 
 
@@ -12,7 +14,7 @@ class ClientRepository:
     def __init__(self):
         pass
 
-    def find_workorders(self, directory_path: str):
+    def find_workorders(self, directory_path: str) -> List[dict]:
         logger.debug(f"Getting workorders from '{directory_path}'")
 
         workorders = []
@@ -21,7 +23,15 @@ class ClientRepository:
 
         for file in json_files:
             json_file_path = path.join(directory_path, file)
-            workorders.append(read_json_from_file(json_file_path))
+            try:
+                workorder = read_json_from_file(json_file_path)
+                workorders.append(workorder)
+            except json.JSONDecodeError:
+                logger.error(f"Corrupted JSON file: '{file}'")
+                continue
+            except PermissionError:
+                logger.error(f"Permission denied reading file: '{file}'")
+                continue
 
         return workorders
 
