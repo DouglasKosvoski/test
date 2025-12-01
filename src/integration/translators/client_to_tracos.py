@@ -2,11 +2,11 @@
 Translation logic from Client format to TracOS format.
 """
 from datetime import datetime, timezone
-from typing import Dict, Any
 from integration.translators.status_mappings import map_client_status_to_tracos as map_status
+from integration.types import ClientWorkorder, TracOSWorkorder
 
 
-def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, Any]:
+def translate_client_to_tracos(client_workorder: ClientWorkorder) -> TracOSWorkorder:
     """
     Translate a workorder from Client format to TracOS format.
 

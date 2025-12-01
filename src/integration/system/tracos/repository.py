@@ -1,16 +1,17 @@
 # CRUD operations on TracOS (MongoDB)
 from loguru import logger  # pyright: ignore[reportMissingImports]
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator
 from adapters.db import get_connection, get_collection
 from os import getenv
-from datetime import datetime
+from datetime import datetime, timezone
+from integration.types import TracOSWorkorder
 
 
 class TracOSRepository:
     def __init__(self):
         pass
 
-    async def save_workorder(self, workorder: dict) -> bool:
+    async def save_workorder(self, workorder: TracOSWorkorder) -> bool:
         """Save a workorder to the database."""
         database = await get_connection()
         collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
@@ -69,7 +70,7 @@ class TracOSRepository:
         return False
 
 
-    async def find_all_unsynced_workorders(self) -> AsyncGenerator[dict, None]:
+    async def find_all_unsynced_workorders(self) -> AsyncGenerator[TracOSWorkorder, None]:
         """Find all unsynced workorders in the database."""
         database = await get_connection()
         collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
@@ -89,7 +90,7 @@ class TracOSRepository:
         collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
 
         query = { "number": workorder_number }
-        values = { "$set": { "isSynced": True, "syncedAt": datetime.now() }}
+        values = { "$set": { "isSynced": True, "syncedAt": datetime.now(timezone.utc) }}
 
         result = await collection.update_one(query, values)
         success = result.modified_count > 0

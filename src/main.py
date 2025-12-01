@@ -10,8 +10,8 @@ from os import getenv
 from pathlib import Path
 
 
-INBOUND_DATA_DIR = Path(getenv("INBOUND_DATA_DIR", "data/inbound"))
-OUTBOUND_DATA_DIR = Path(getenv("OUTBOUND_DATA_DIR", "data/outbound"))
+DATA_INBOUND_DIR = Path(getenv("DATA_INBOUND_DIR", "data/inbound"))
+DATA_OUTBOUND_DIR = Path(getenv("DATA_OUTBOUND_DIR", "data/outbound"))
 LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
 
 def setup_logger():
@@ -26,11 +26,11 @@ async def main():
 
     # Sync client data to TracOS
     client_to_tracos_flow = ClientToTracOSFlow()
-    await client_to_tracos_flow.sync(INBOUND_DATA_DIR)
+    await client_to_tracos_flow.sync(DATA_INBOUND_DIR)
 
     # Sync TracOS data to client
     tracos_to_client_flow = TracOSToClientFlow()
-    await tracos_to_client_flow.sync(OUTBOUND_DATA_DIR)
+    await tracos_to_client_flow.sync(DATA_OUTBOUND_DIR)
 
     logger.success("Finished integration!")
 

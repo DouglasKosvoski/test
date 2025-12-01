@@ -17,5 +17,8 @@ RUN poetry config virtualenvs.create false && poetry install --no-interaction
 # Create data directories
 RUN mkdir -p /app/data/inbound /app/data/outbound
 
+# Set PYTHONPATH so imports resolve correctly
+ENV PYTHONPATH=/app/src
+
 # Set working directory
 WORKDIR /app

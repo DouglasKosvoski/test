@@ -1,10 +1,11 @@
 # Read JSON from inbound, write to outbound
 from loguru import logger  # pyright: ignore[reportMissingImports]
-from os import getenv
 from adapters.filesystem import list_json_files_in_directory, read_json_from_file
 from os import path
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
+from integration.types import ClientWorkorder
 
 
 class ClientRepository:
@@ -32,7 +33,7 @@ class ClientRepository:
         except ValueError:
             return False
 
-    def validate_workorder(self, workorder: dict) -> dict | None:
+    def validate_workorder(self, workorder: dict) -> Optional[ClientWorkorder]:
         """Validate a workorder from Client format."""
 
         expected_format = {

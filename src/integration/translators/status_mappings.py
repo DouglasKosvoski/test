@@ -5,7 +5,8 @@ This module provides centralized mappings for status enum values
 between the two systems.
 """
 
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
+from integration.types import StatusMappingResult, ClientWorkorderFlags
 
 # Mapping from Client status values to TracOS status values
 CLIENT_TO_TRACOS_STATUS: Dict[str, str] = {
@@ -83,7 +84,7 @@ def map_client_status_to_tracos(status: Optional[str] = None, flags: Optional[Di
     return 'in_progress'
 
 
-def map_tracos_status_to_client(status: Optional[str] = None) -> Dict[str, Any]:
+def map_tracos_status_to_client(status: Optional[str] = None) -> StatusMappingResult:
     """
     Map TracOS status to client format.
     

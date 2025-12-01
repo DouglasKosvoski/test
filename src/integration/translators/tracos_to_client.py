@@ -1,12 +1,12 @@
 """
 Translation logic from TracOS format to Client format.
 """
-from datetime import datetime
-from typing import Dict, Any
+from datetime import datetime, timezone
 from integration.translators.status_mappings import map_tracos_status_to_client as map_status
+from integration.types import ClientWorkorder, TracOSWorkorder
 
 
-def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, Any]:
+def translate_tracos_to_client(tracos_workorder: TracOSWorkorder) -> ClientWorkorder:
     """
     Translate a workorder from TracOS format to Client format.
 
@@ -75,7 +75,7 @@ def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, An
 def _format_datetime(dt: datetime) -> str:
     """Format datetime object to ISO string."""
     if not dt:
-        return datetime.utcnow().isoformat()
+        return datetime.now(timezone.utc).isoformat()
 
     if isinstance(dt, datetime):
         return dt.isoformat()
