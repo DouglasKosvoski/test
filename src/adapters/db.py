@@ -1,5 +1,11 @@
+import asyncio
 from os import getenv
+
+from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 2
 
 
 async def get_connection() -> AsyncIOMotorDatabase:
@@ -9,7 +15,7 @@ async def get_connection() -> AsyncIOMotorDatabase:
         raise ValueError("DATABASE_DRIVER is not set")
 
     if DATABASE_DRIVER == "mongodb":
-        return await get_mongodb_connection()
+        return await get_mongodb_connection_with_retry()
     else:
         raise ValueError(f"Unsupported database driver: {DATABASE_DRIVER}")
 
@@ -35,6 +41,26 @@ async def get_mongodb_connection() -> AsyncIOMotorDatabase:
         raise ValueError("Failed to connect to MongoDB")
 
     return database
+
+
+async def get_mongodb_connection_with_retry() -> AsyncIOMotorDatabase:
+    """Get MongoDB connection with retry logic."""
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            database = await get_mongodb_connection()
+            # Verify connection
+            await database.command("ping")
+            return database
+        except Exception as e:
+            last_error = e
+            logger.warning(f"MongoDB connection attempt {attempt}/{MAX_RETRIES} failed: {e}")
+
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY_SECONDS)
+
+    raise ConnectionError(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts: {last_error}")
 
 
 def get_collection(database: AsyncIOMotorDatabase, collection_name: str) -> AsyncIOMotorCollection:
