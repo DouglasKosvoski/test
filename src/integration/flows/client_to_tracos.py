@@ -7,8 +7,6 @@ from integration.translators.client_to_tracos import translate_client_to_tracos
 
 class ClientToTracOSFlow:
     def __init__(self):
-        logger.info("ClientToTracOSFlow module initialized")
-
         self.client_repository = ClientRepository()
         self.tracos_repository = TracOSRepository()
 
@@ -17,10 +15,17 @@ class ClientToTracOSFlow:
 
         workorders = self.client_repository.find_workorders(str(directory_path))
 
-        logger.info(f"Found {len(workorders)} workorders in '{directory_path}'")
+        logger.debug(f"Found {len(workorders)} workorders in '{directory_path}'")
 
         for workorder in workorders:
             validated_workorder = self.client_repository.validate_workorder(workorder)
-            translated_workorder = translate_client_to_tracos(validated_workorder)
 
-            await self.tracos_repository.save_workorder(translated_workorder)
+            if validated_workorder is None:
+                logger.warning(f"Workorder {workorder['orderNo']} is not valid")
+                continue
+
+            translated_workorder_into_tracos_format = translate_client_to_tracos(validated_workorder)
+
+            # print('translated_workorder_into_tracos_format', translated_workorder_into_tracos_format)
+
+            await self.tracos_repository.save_workorder(translated_workorder_into_tracos_format)

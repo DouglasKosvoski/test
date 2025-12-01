@@ -8,8 +8,6 @@ import os
 
 class TracOSToClientFlow:
     def __init__(self):
-        logger.info("TracOSToClientFlow module initialized")
-
         self.tracos_repository = TracOSRepository()
 
 
@@ -29,7 +27,7 @@ class TracOSToClientFlow:
                 workorder_count += 1
                 logger.debug(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
 
-        logger.info(f"Exported {workorder_count} workorders to '{directory_path}'")
+        logger.debug(f"Exported {workorder_count} workorders to '{directory_path}'")
 
 
     def validate_workorder(self, workorder: dict) -> bool:

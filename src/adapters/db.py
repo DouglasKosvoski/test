@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncI
 
 
 async def get_connection() -> AsyncIOMotorDatabase:
-    DATABASE_DRIVER = getenv("DATABASE_DRIVER")
+    DATABASE_DRIVER = getenv("DATABASE_DRIVER", "mongodb")
 
     if DATABASE_DRIVER is None:
         raise ValueError("DATABASE_DRIVER is not set")
@@ -15,8 +15,8 @@ async def get_connection() -> AsyncIOMotorDatabase:
 
 
 async def get_mongodb_connection() -> AsyncIOMotorDatabase:
-    MONGO_URI = getenv("MONGO_URI")
-    MONGO_DATABASE = getenv("MONGO_DATABASE")
+    MONGO_URI = getenv("MONGO_URI", "mongodb://localhost:27017")
+    MONGO_DATABASE = getenv("MONGO_DATABASE", "tractian")
 
     if MONGO_URI is None:
         raise ValueError("MONGO_URI is not set")

@@ -1,7 +1,7 @@
 """
 Translation logic from Client format to TracOS format.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 
@@ -29,8 +29,8 @@ def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, An
         'status': 'completed',
         'title': 'Example workorder #1',
         'description': 'Example workorder #1 description',
-        'createdAt': datetime.datetime(2025, 11, 2, 2, 0, 53, 670000),
-        'updatedAt': datetime.datetime(2025, 11, 2, 3, 0, 53, 670000),
+        'createdAt': ISODate('2025-11-06T17:20:19.867Z'),
+        'updatedAt': ISODate('2025-11-06T17:20:19.867Z'),
         'deleted': False
     }
     """
@@ -70,18 +70,28 @@ def map_client_status_to_tracos(client_workorder: Dict[str, Any]) -> str:
 
 
 def parse_datetime(date_string: str) -> datetime:
-    """Parse ISO datetime string to datetime object."""
+    """Parse ISO datetime string to timezone-aware datetime object (UTC).
+    
+    Returns timezone-aware datetime objects that MongoDB will correctly
+    store as ISODate objects.
+    """
     if not date_string:
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
     try:
         # Handle different ISO formats
         if 'T' in date_string:
             # ISO format with T separator
-            return datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+            dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
         else:
             # Fallback to parsing as ISO
-            return datetime.fromisoformat(date_string)
+            dt = datetime.fromisoformat(date_string)
+
+        # Ensure timezone-aware (UTC if naive)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+
+        return dt
     except (ValueError, AttributeError):
-        # If parsing fails, return current time
-        return datetime.utcnow()
+        # If parsing fails, return current time (timezone-aware UTC)
+        return datetime.now(timezone.utc)
