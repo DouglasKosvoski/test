@@ -3,6 +3,7 @@ Translation logic from TracOS format to Client format.
 """
 from datetime import datetime
 from typing import Dict, Any
+from integration.translators.status_mappings import map_tracos_status_to_client as map_status
 
 
 def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, Any]:
@@ -24,7 +25,8 @@ def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, An
     Client format:
     {
         'orderNo': 10,
-        'isCanceled': False,
+        'status': 'NEW',  # Status enum value (e.g., 'NEW', 'PENDING', 'COMPLETED')
+        'isCanceled': False,  # Boolean flags (backward compatibility)
         'isDeleted': False,
         'isDone': False,
         'isOnHold': False,
@@ -35,9 +37,10 @@ def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, An
         'deletedDate': None
     }
     """
-    # Map status flags based on TracOS status
-    status_flags = _map_tracos_status_to_client(
-        tracos_workorder.get('status', ''))
+    # Map status: returns both enum value and boolean flags
+    status_mapping = map_status(tracos_workorder.get('status'))
+    status_enum = status_mapping.get('status')
+    status_flags = status_mapping.get('flags', {})
 
     # Format dates as ISO strings
     created_date = _format_datetime(tracos_workorder.get('createdAt'))
@@ -47,46 +50,26 @@ def translate_tracos_to_client(tracos_workorder: Dict[str, Any]) -> Dict[str, An
     deleted_date = _format_datetime(tracos_workorder.get(
         'updatedAt')) if tracos_workorder.get('deleted', False) else None
 
-    return {
+    result = {
         'orderNo': tracos_workorder.get('number'),
-        'isCanceled': status_flags['isCanceled'],
+        'isCanceled': status_flags.get('isCanceled', False),
         'isDeleted': tracos_workorder.get('deleted', False),
-        'isDone': status_flags['isDone'],
-        'isOnHold': status_flags['isOnHold'],
-        'isPending': status_flags['isPending'],
+        'isDone': status_flags.get('isDone', False),
+        'isOnHold': status_flags.get('isOnHold', False),
+        'isPending': status_flags.get('isPending', False),
         'summary': tracos_workorder.get('title', ''),
         'creationDate': created_date,
         'lastUpdateDate': updated_date,
         'deletedDate': deleted_date
     }
+    
+    # Add status enum if available
+    if status_enum:
+        result['status'] = status_enum
+    
+    return result
 
 
-def _map_tracos_status_to_client(status: str) -> Dict[str, bool]:
-    """Map TracOS status string to client status flags."""
-    # Default all flags to False
-    flags = {
-        'isCanceled': False,
-        'isDone': False,
-        'isOnHold': False,
-        'isPending': False
-    }
-
-    status_lower = status.lower()
-
-    if status_lower == 'completed':
-        flags['isDone'] = True
-    elif status_lower == 'cancelled':
-        flags['isCanceled'] = True
-    elif status_lower == 'on_hold':
-        flags['isOnHold'] = True
-    elif status_lower == 'pending':
-        flags['isPending'] = True
-    elif status_lower == 'deleted':
-        # This will be handled separately in the main function
-        flags['isDeleted'] = True
-    # in_progress is the default, so no flags set
-
-    return flags
 
 
 def _format_datetime(dt: datetime) -> str:

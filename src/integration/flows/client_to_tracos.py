@@ -26,6 +26,4 @@ class ClientToTracOSFlow:
 
             translated_workorder_into_tracos_format = translate_client_to_tracos(validated_workorder)
 
-            # print('translated_workorder_into_tracos_format', translated_workorder_into_tracos_format)
-
             await self.tracos_repository.save_workorder(translated_workorder_into_tracos_format)

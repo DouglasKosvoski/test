@@ -25,9 +25,7 @@ def list_files_in_directory(directory_path: str) -> List[str]:
 
 
 def list_json_files_in_directory(directory_path: str) -> List[str]:
-    """
-    Return all JSON file names in the given directory.
-    """
+    """Return all JSON file names in the given directory."""
     return [
         name for name in list_files_in_directory(directory_path)
         if name.lower().endswith(".json")
@@ -59,23 +57,16 @@ def read_json_from_file(file_path: str | Path) -> Any:
 
 
 def write_json_to_file(file_path: str | Path, data: Any) -> None:
-    """
-    Write JSON data to a file, ensuring the directory exists.
-
-    Raises:
-        NotADirectoryError: if the target directory does not exist.
-    """
+    """Write JSON data to a file, ensuring the directory exists."""
     path = Path(file_path)
 
     if not path.parent.exists():
-        raise NotADirectoryError(
-            f"Directory '{path.parent}' does not exist for output file"
-        )
+        os.makedirs(path.parent, exist_ok=True)
 
     # Optional: atomic write to avoid corrupted files
     temp_path = path.with_suffix(path.suffix + ".tmp")
 
     with temp_path.open("w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
+        json.dump(data, file, indent=2, ensure_ascii=False)
 
     temp_path.replace(path)

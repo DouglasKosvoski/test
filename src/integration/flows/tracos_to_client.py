@@ -18,16 +18,24 @@ class TracOSToClientFlow:
         os.makedirs(directory_path, exist_ok=True)
 
         workorder_count = 0
-        async for workorder in self.tracos_repository.find_all_workorders():
-            if self.validate_workorder(workorder):
-                translated_workorder = translate_tracos_to_client(workorder)
-                filename = f"workorder_{translated_workorder['orderNo']}.json"
-                filepath = directory_path / filename
-                write_json_to_file(str(filepath), translated_workorder)
-                workorder_count += 1
-                logger.debug(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
+        async for workorder in self.tracos_repository.find_all_unsynced_workorders():
+            if not self.validate_workorder(workorder):
+                logger.warning(f"Workorder {workorder['number']} is not valid")
+                continue
 
-        logger.debug(f"Exported {workorder_count} workorders to '{directory_path}'")
+            translated_workorder = translate_tracos_to_client(workorder)
+
+            filename = f"{translated_workorder['orderNo']}.json"
+            filepath = directory_path / filename
+
+            write_json_to_file(str(filepath), translated_workorder)
+
+            await self.tracos_repository.mark_workorder_as_synced(workorder['number'])
+
+            workorder_count += 1
+            logger.info(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
+
+        logger.success(f"Exported {workorder_count} workorders to '{directory_path}'")
 
 
     def validate_workorder(self, workorder: dict) -> bool:
@@ -46,12 +54,14 @@ class TracOSToClientFlow:
             'deleted': False
         }
         """
-        required_fields = ['number', 'status', 'title', 'createdAt', 'updatedAt']
+        required_fields = ['number', 'status', 'title', 'description', 'createdAt', 'updatedAt', 'deleted']
 
         for field in required_fields:
-            if field not in workorder:
-                logger.warning(f"Workorder missing required field: {field}")
+            if field in workorder and workorder[field] is not None:
+                continue
 
-                return False
+            logger.warning(f"Workorder missing required field: {field}")
+
+            return False
 
         return True

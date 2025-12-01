@@ -29,8 +29,8 @@ async def main():
     await client_to_tracos_flow.sync(INBOUND_DATA_DIR)
 
     # Sync TracOS data to client
-    # tracos_to_client_flow = TracOSToClientFlow()
-    # await tracos_to_client_flow.sync(OUTBOUND_DATA_DIR)
+    tracos_to_client_flow = TracOSToClientFlow()
+    await tracos_to_client_flow.sync(OUTBOUND_DATA_DIR)
 
     logger.success("Finished integration!")
 

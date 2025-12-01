@@ -3,6 +3,7 @@ Translation logic from Client format to TracOS format.
 """
 from datetime import datetime, timezone
 from typing import Dict, Any
+from integration.translators.status_mappings import map_client_status_to_tracos as map_status
 
 
 def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, Any]:
@@ -12,7 +13,8 @@ def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, An
     Client format:
     {
         'orderNo': 10,
-        'isCanceled': False,
+        'status': 'NEW',  # Optional: status enum value
+        'isCanceled': False,  # Optional: boolean flags (backward compatibility)
         'isDeleted': False,
         'isDone': False,
         'isOnHold': False,
@@ -34,8 +36,17 @@ def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, An
         'deleted': False
     }
     """
-    # Map status based on client flags
-    status = map_client_status_to_tracos(client_workorder)
+    # Map status: supports both enum values (e.g., 'NEW') and boolean flags
+    status = map_status(
+        status=client_workorder.get('status'),
+        flags={
+            'isDeleted': client_workorder.get('isDeleted', False),
+            'isCanceled': client_workorder.get('isCanceled', False),
+            'isDone': client_workorder.get('isDone', False),
+            'isOnHold': client_workorder.get('isOnHold', False),
+            'isPending': client_workorder.get('isPending', False),
+        }
+    )
 
     # Parse dates
     created_at = parse_datetime(client_workorder.get('creationDate'))
@@ -45,29 +56,10 @@ def translate_client_to_tracos(client_workorder: Dict[str, Any]) -> Dict[str, An
         'number': client_workorder.get('orderNo'),
         'status': status,
         'title': client_workorder.get('summary', ''),
-        # Using summary as description for now
-        'description': client_workorder.get('summary', ''),
         'createdAt': created_at,
         'updatedAt': updated_at,
         'deleted': client_workorder.get('isDeleted', False)
     }
-
-
-def map_client_status_to_tracos(client_workorder: Dict[str, Any]) -> str:
-    """Map client status flags to TracOS status string."""
-    if client_workorder.get('isDeleted', False):
-        return 'deleted'
-    elif client_workorder.get('isCanceled', False):
-        return 'cancelled'
-    elif client_workorder.get('isDone', False):
-        return 'completed'
-    elif client_workorder.get('isOnHold', False):
-        return 'on_hold'
-    elif client_workorder.get('isPending', False):
-        return 'pending'
-    else:
-        return 'in_progress'
-
 
 def parse_datetime(date_string: str) -> datetime:
     """Parse ISO datetime string to timezone-aware datetime object (UTC).
