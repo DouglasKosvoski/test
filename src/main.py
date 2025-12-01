@@ -2,8 +2,8 @@
 
 import asyncio
 from loguru import logger
-from integration.inbound.InboundHandler import InboundHandler
-from integration.outbound.OutboundHandler import OutboundHandler
+from integration.inbound.inbound_handler import InboundHandler
+from integration.outbound.outbound_handler import OutboundHandler
 from os import getenv
 from pathlib import Path
 
