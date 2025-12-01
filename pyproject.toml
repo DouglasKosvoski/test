@@ -14,7 +14,12 @@ python = "^3.11,<3.12"
 python-decouple = "3.8"
 loguru = "^0.7.2"
 motor = "^3.1.1"            # Async MongoDB driver
+
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
+pytest-asyncio = "^0.23.0"
+pytest-cov = "^4.1.0"       # Coverage reporting
+mongomock = "^4.1.2"        # MongoDB mock for testing
 
 [tool.poetry.group.formatting.dependencies]
 black = "^23.3.0"
@@ -28,3 +33,10 @@ extend-exclude = '''
   | _build
 )/
 '''
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

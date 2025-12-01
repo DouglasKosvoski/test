@@ -56,6 +56,7 @@ def translate_client_to_tracos(client_workorder: ClientWorkorder) -> TracOSWorko
         'number': client_workorder.get('orderNo'),
         'status': status,
         'title': client_workorder.get('summary', ''),
+        'description': client_workorder.get('summary', ''),
         'createdAt': created_at,
         'updatedAt': updated_at,
         'deleted': client_workorder.get('isDeleted', False)
