@@ -35,7 +35,6 @@ class ClientRepository:
 
         return workorders
 
-
     def is_iso_datetime(self, value: str) -> bool:
         try:
             datetime.fromisoformat(value)
@@ -54,9 +53,9 @@ class ClientRepository:
             "isOnHold": bool,
             "isPending": bool,
             "summary": str,
-            "creationDate": str, # Datetime fields come as ISO strings from JSON
-            "lastUpdateDate": str, # Datetime fields come as ISO strings from JSON
-            "deletedDate": str if workorder.get('isDeleted', False) else type(None), # Optional datetime field
+            "creationDate": str,  # Datetime fields come as ISO strings from JSON
+            "lastUpdateDate": str,  # Datetime fields come as ISO strings from JSON
+            "deletedDate": str if workorder.get("isDeleted", False) else type(None),  # Optional datetime field
         }
 
         validated_workorder = {}
@@ -67,13 +66,15 @@ class ClientRepository:
                 return None
 
             # Special validation for datetime fields
-            if field in ['creationDate', 'lastUpdateDate'] and workorder[field] is not None:
+            if field in ["creationDate", "lastUpdateDate"] and workorder[field] is not None:
                 if not isinstance(workorder[field], str) or not self.is_iso_datetime(workorder[field]):
                     logger.warning(f"Workorder field {field} is not a valid ISO datetime string")
                     return None
-            elif field == 'deletedDate':
-                if workorder.get('isDeleted', False):
-                    if workorder[field] is not None and (not isinstance(workorder[field], str) or not self.is_iso_datetime(workorder[field])):
+            elif field == "deletedDate":
+                if workorder.get("isDeleted", False):
+                    if workorder[field] is not None and (
+                        not isinstance(workorder[field], str) or not self.is_iso_datetime(workorder[field])
+                    ):
                         logger.warning(f"Workorder field {field} is not a valid ISO datetime string or None")
                         return None
                 else:
@@ -82,7 +83,7 @@ class ClientRepository:
                         return None
 
             # Skip type check for datetime fields since we handled them above
-            if field in ['creationDate', 'lastUpdateDate', 'deletedDate']:
+            if field in ["creationDate", "lastUpdateDate", "deletedDate"]:
                 validated_workorder[field] = workorder[field]
                 continue
 

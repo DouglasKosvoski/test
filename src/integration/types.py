@@ -11,6 +11,7 @@ from typing import TypedDict, Optional
 
 class ClientWorkorderFlags(TypedDict):
     """Boolean status flags used in Client workorder format."""
+
     isCanceled: bool
     isDeleted: bool
     isDone: bool
@@ -21,7 +22,7 @@ class ClientWorkorderFlags(TypedDict):
 class ClientWorkorder(TypedDict):
     """
     Workorder format used by the Client system.
-    
+
     Example:
     {
         'orderNo': 10,
@@ -37,6 +38,7 @@ class ClientWorkorder(TypedDict):
         'deletedDate': None
     }
     """
+
     orderNo: int
     status: Optional[str]
     isCanceled: bool
@@ -53,7 +55,7 @@ class ClientWorkorder(TypedDict):
 class TracOSWorkorder(TypedDict):
     """
     Workorder format used by the TracOS system (MongoDB).
-    
+
     Example:
     {
         'number': 1,
@@ -65,6 +67,7 @@ class TracOSWorkorder(TypedDict):
         'deleted': False
     }
     """
+
     number: int
     status: str
     title: str
@@ -73,8 +76,9 @@ class TracOSWorkorder(TypedDict):
     updatedAt: datetime
     deleted: bool
 
+
 class StatusMappingResult(TypedDict):
     """Result of mapping TracOS status to Client format."""
+
     status: Optional[str]
     flags: ClientWorkorderFlags
-

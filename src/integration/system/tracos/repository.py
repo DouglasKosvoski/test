@@ -29,15 +29,9 @@ class TracOSRepository:
                     return True
 
                 # Update existing workorder, preserving the _id
-                updated_workorder = {
-                    **existing,
-                    **workorder
-                }
+                updated_workorder = {**existing, **workorder}
 
-                await collection.update_one(
-                    {"number": workorder.get("number")},
-                    {"$set": updated_workorder}
-                )
+                await collection.update_one({"number": workorder.get("number")}, {"$set": updated_workorder})
 
                 logger.debug(f"Updated workorder {workorder_number}")
                 return True
@@ -56,39 +50,38 @@ class TracOSRepository:
 
     def should_update_workorder(self, existing: dict, workorder: dict) -> bool:
         """Check if a workorder should be updated.
-        
+
         Compares all fields except _id to determine if any changes exist.
         Returns True if any field has been modified, False otherwise.
         """
         # Create copies without _id for comparison
         existing_copy = {k: v for k, v in existing.items() if k != "_id"}
         workorder_copy = {k: v for k, v in workorder.items() if k != "_id"}
-        
+
         # Get all unique keys from both dictionaries
         all_keys = set(existing_copy.keys()) | set(workorder_copy.keys())
-        
+
         # Compare each field
         for key in all_keys:
             existing_value = existing_copy.get(key)
             workorder_value = workorder_copy.get(key)
-            
+
             # If values differ, update is needed
             if existing_value != workorder_value:
                 return True
-        
+
         # No differences found
         return False
 
-
-    async def find_all_unsynced_workorders(self) -> AsyncGenerator[TracOSWorkorder, None]:
+    async def find_all_unsynced_workorders(
+        self,
+    ) -> AsyncGenerator[TracOSWorkorder, None]:
         """Find all unsynced workorders in the database."""
         try:
             database = await get_connection()
             collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
 
-            query = {
-                "isSynced": { "$ne": True }
-            }
+            query = {"isSynced": {"$ne": True}}
 
             cursor = collection.find(query)
             async for doc in cursor:
@@ -100,15 +93,14 @@ class TracOSRepository:
             logger.error("Database error while fetching unsynced workorders")
             return
 
-
     async def mark_workorder_as_synced(self, workorder_number: int) -> bool:
         """Mark a workorder as synced."""
         try:
             database = await get_connection()
             collection = get_collection(database, getenv("MONGO_COLLECTION", "workorders"))
 
-            query = { "number": workorder_number }
-            values = { "$set": { "isSynced": True, "syncedAt": datetime.now(timezone.utc) }}
+            query = {"number": workorder_number}
+            values = {"$set": {"isSynced": True, "syncedAt": datetime.now(timezone.utc)}}
 
             result = await collection.update_one(query, values)
             success = result.modified_count > 0

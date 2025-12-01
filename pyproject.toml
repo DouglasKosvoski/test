@@ -25,7 +25,7 @@ mongomock = "^4.1.2"        # MongoDB mock for testing
 black = "^23.3.0"
 
 [tool.black]
-line-length = 88
+line-length = 120
 include = '\.pyi?$'
 extend-exclude = '''
 /(

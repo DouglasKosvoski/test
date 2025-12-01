@@ -10,7 +10,6 @@ class TracOSToClientFlow:
     def __init__(self):
         self.tracos_repository = TracOSRepository()
 
-
     async def sync(self, directory_path: Path):
         logger.info("Syncing TracOS data with Client...")
 
@@ -26,7 +25,7 @@ class TracOSToClientFlow:
 
         workorder_count = 0
         async for workorder in self.tracos_repository.find_all_unsynced_workorders():
-            workorder_number = workorder.get('number', 'unknown')
+            workorder_number = workorder.get("number", "unknown")
 
             if not self.validate_workorder(workorder):
                 logger.warning(f"Workorder {workorder_number} is not valid")
@@ -40,7 +39,7 @@ class TracOSToClientFlow:
 
                 write_json_to_file(str(filepath), translated_workorder)
 
-                await self.tracos_repository.mark_workorder_as_synced(workorder['number'])
+                await self.tracos_repository.mark_workorder_as_synced(workorder["number"])
 
                 workorder_count += 1
                 logger.info(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
@@ -55,7 +54,6 @@ class TracOSToClientFlow:
                 continue
 
         logger.success(f"Exported {workorder_count} workorders to '{directory_path}'")
-
 
     def validate_workorder(self, workorder: dict) -> bool:
         """
@@ -73,7 +71,15 @@ class TracOSToClientFlow:
             'deleted': False
         }
         """
-        required_fields = ['number', 'status', 'title', 'description', 'createdAt', 'updatedAt', 'deleted']
+        required_fields = [
+            "number",
+            "status",
+            "title",
+            "description",
+            "createdAt",
+            "updatedAt",
+            "deleted",
+        ]
 
         for field in required_fields:
             if field in workorder and workorder[field] is not None:

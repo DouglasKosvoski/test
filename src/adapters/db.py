@@ -2,7 +2,11 @@ import asyncio
 from os import getenv
 
 from loguru import logger
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorDatabase,
+    AsyncIOMotorCollection,
+)
 
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 2

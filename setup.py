@@ -66,9 +66,7 @@ def create_tracos_sample_workorders() -> list[TracOSWorkorder]:
             {
                 "_id": ObjectId(),
                 "number": i,
-                "status": choice(
-                    ["pending", "in_progress", "completed", "on_hold", "cancelled"]
-                ),
+                "status": choice(["pending", "in_progress", "completed", "on_hold", "cancelled"]),
                 "title": f"Example workorder #{i}",
                 "description": f"Example workorder #{i} description",
                 "createdAt": (base + timedelta(days=i)),
@@ -84,10 +82,7 @@ def create_customer_system_sample_workorders() -> list[CustomerSystemWorkorder]:
     base = datetime.now(timezone.utc) - timedelta(days=30)
     samples: list[CustomerSystemWorkorder] = []
     for i in range(1, NUMBER_OF_WORKORDERS_SAMPLES_ON_CUSTOMER_SYSTEM + 1):
-        _status = choice(
-            ["pending", "in_progress", "completed",
-                "on_hold", "cancelled", "deleted"]
-        )
+        _status = choice(["pending", "in_progress", "completed", "on_hold", "cancelled", "deleted"])
         sample = {
             "orderNo": i,
             "isCanceled": _status == "cancelled",
@@ -113,7 +108,9 @@ async def create_tracos_workorder_on_mongo(
     await collection.insert_many(workorders)
 
 
-def create_customer_system_workorder_on_file_system(workorders: list[CustomerSystemWorkorder]) -> None:
+def create_customer_system_workorder_on_file_system(
+    workorders: list[CustomerSystemWorkorder],
+) -> None:
     for workorder in workorders:
         with open(f"{DATA_INBOUND_DIR}/{workorder['orderNo']}.json", "w+") as f:
             json.dump(workorder, f, indent=2)

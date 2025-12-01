@@ -15,9 +15,14 @@ DATA_INBOUND_DIR = Path(getenv("DATA_INBOUND_DIR", "data/inbound"))
 DATA_OUTBOUND_DIR = Path(getenv("DATA_OUTBOUND_DIR", "data/outbound"))
 LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
 
+
 def setup_logger():
-    logger.remove() # Remove default handler
-    logger.add(lambda msg: print(msg, end=""), level=LOG_LEVEL, format="{time:HH:mm:ss} | {level} | {message}")
+    logger.remove()  # Remove default handler
+    logger.add(
+        lambda msg: print(msg, end=""),
+        level=LOG_LEVEL,
+        format="{time:HH:mm:ss} | {level} | {message}",
+    )
 
 
 async def main():

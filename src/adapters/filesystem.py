@@ -26,10 +26,7 @@ def list_files_in_directory(directory_path: str) -> List[str]:
 
 def list_json_files_in_directory(directory_path: str) -> List[str]:
     """Return all JSON file names in the given directory."""
-    return [
-        name for name in list_files_in_directory(directory_path)
-        if name.lower().endswith(".json")
-    ]
+    return [name for name in list_files_in_directory(directory_path) if name.lower().endswith(".json")]
 
 
 def read_json_from_file(file_path: str | Path) -> Any:

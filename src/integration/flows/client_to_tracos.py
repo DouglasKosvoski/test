@@ -25,7 +25,7 @@ class ClientToTracOSFlow:
         logger.debug(f"Found {len(workorders)} workorders in '{directory_path}'")
 
         for workorder in workorders:
-            order_number = workorder.get('orderNo', 'unknown')
+            order_number = workorder.get("orderNo", "unknown")
             try:
                 validated_workorder = self.client_repository.validate_workorder(workorder)
 
