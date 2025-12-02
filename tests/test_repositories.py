@@ -299,6 +299,7 @@ class TestTracOSRepository:
 
         assert repo.should_update_workorder(existing, new) is False
 
+
 class TestTracOSRepositoryErrorHandling:
     """Tests for TracOSRepository error handling."""
 

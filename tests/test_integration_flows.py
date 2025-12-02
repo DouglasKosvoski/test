@@ -130,6 +130,7 @@ class TestClientToTracOSFlow:
         assert isinstance(saved["createdAt"], datetime)
         assert isinstance(saved["updatedAt"], datetime)
 
+
 class TestTracOSToClientFlow:
     """End-to-end tests for TracOS → Client synchronization."""
 
