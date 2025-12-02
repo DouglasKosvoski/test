@@ -59,6 +59,7 @@ def map_client_status_to_tracos(status: Optional[str] = None, flags: Optional[Di
     Returns:
         TracOS status string (e.g., 'created', 'pending')
     """
+
     # First priority: use status enum if provided
     if status:
         status_upper = status.upper()
@@ -98,6 +99,7 @@ def map_tracos_status_to_client(status: Optional[str] = None) -> StatusMappingRe
     Returns:
         Dictionary with 'status' and 'flags' keys
     """
+
     result = {
         "status": None,
         "flags": {

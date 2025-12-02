@@ -17,7 +17,7 @@ LOG_LEVEL = getenv("LOG_LEVEL", "DEBUG")
 
 
 def setup_logger():
-    logger.remove()  # Remove default handler
+    logger.remove()
     logger.add(
         lambda msg: print(msg, end=""),
         level=LOG_LEVEL,
@@ -28,18 +28,22 @@ def setup_logger():
 async def main():
     setup_logger()
 
-    logger.success("Starting TracOS ↔ Client Integration Flow")
+    logger.success("Starting TracOS <=> Client Integration Flow")
 
     try:
         # Sync client data to TracOS
         client_to_tracos_flow = ClientToTracOSFlow()
         await client_to_tracos_flow.sync(DATA_INBOUND_DIR)
+        logger.success("Client data synced to TracOS")
+        logger.debug("--------------------------------")
 
         # Sync TracOS data to client
         tracos_to_client_flow = TracOSToClientFlow()
         await tracos_to_client_flow.sync(DATA_OUTBOUND_DIR)
+        logger.success("TracOS data synced to Client")
+        logger.debug("--------------------------------")
 
-        logger.success("Finished integration!")
+        logger.success("Integration flow completed successfully")
     except ConnectionError:
         logger.error("Unable to connect to the database. Please check your connection settings.")
         sys.exit(1)

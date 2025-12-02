@@ -1,3 +1,11 @@
+"""
+TracOS to Client synchronization flow.
+
+Orchestrates the synchronization of workorders from the TracOS MongoDB database
+to the Client file system. Fetches unsynced workorders from the database,
+translates them to Client format and exports as JSON files to an outbound directory.
+"""
+
 from loguru import logger  # pyright: ignore[reportMissingImports]
 from pathlib import Path
 from integration.system.tracos.repository import TracOSRepository
@@ -9,6 +17,10 @@ import os
 class TracOSToClientFlow:
     def __init__(self):
         self.tracos_repository = TracOSRepository()
+
+    def validate_workorder(self, workorder: dict) -> bool:
+        """Validate a TracOS workorder."""
+        return self.tracos_repository.validate_workorder(workorder)
 
     async def sync(self, directory_path: Path):
         logger.info("Syncing TracOS data with Client...")
@@ -42,7 +54,7 @@ class TracOSToClientFlow:
                 await self.tracos_repository.mark_workorder_as_synced(workorder["number"])
 
                 workorder_count += 1
-                logger.info(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
+                logger.debug(f"Exported workorder {translated_workorder['orderNo']} to {filepath}")
             except PermissionError:
                 logger.error(f"Permission denied writing workorder {workorder_number}")
                 continue
@@ -52,41 +64,3 @@ class TracOSToClientFlow:
             except Exception:
                 logger.error(f"Failed to process workorder {workorder_number}")
                 continue
-
-        logger.success(f"Exported {workorder_count} workorders to '{directory_path}'")
-
-    def validate_workorder(self, workorder: dict) -> bool:
-        """
-        Validate a workorder from TracOS format.
-
-        Expected format:
-        {
-            '_id': ObjectId('692cf6d50b12b168f2f7cc18'),
-            'number': 1,
-            'status': 'completed',
-            'title': 'Example workorder #1',
-            'description': 'Example workorder #1 description',
-            'createdAt': datetime.datetime(2025, 11, 2, 2, 0, 53, 670000),
-            'updatedAt': datetime.datetime(2025, 11, 2, 3, 0, 53, 670000),
-            'deleted': False
-        }
-        """
-        required_fields = [
-            "number",
-            "status",
-            "title",
-            "description",
-            "createdAt",
-            "updatedAt",
-            "deleted",
-        ]
-
-        for field in required_fields:
-            if field in workorder and workorder[field] is not None:
-                continue
-
-            logger.warning(f"Workorder missing required field: {field}")
-
-            return False
-
-        return True

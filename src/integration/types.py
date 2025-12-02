@@ -20,24 +20,7 @@ class ClientWorkorderFlags(TypedDict):
 
 
 class ClientWorkorder(TypedDict):
-    """
-    Workorder format used by the Client system.
-
-    Example:
-    {
-        'orderNo': 10,
-        'status': 'NEW',
-        'isCanceled': False,
-        'isDeleted': False,
-        'isDone': False,
-        'isOnHold': False,
-        'isPending': False,
-        'summary': 'Example workorder #10',
-        'creationDate': '2025-11-11T02:00:53.697748+00:00',
-        'lastUpdateDate': '2025-11-11T03:00:53.697748+00:00',
-        'deletedDate': None
-    }
-    """
+    """Workorder format used by the Client system."""
 
     orderNo: int
     status: Optional[str]
@@ -53,20 +36,7 @@ class ClientWorkorder(TypedDict):
 
 
 class TracOSWorkorder(TypedDict):
-    """
-    Workorder format used by the TracOS system (MongoDB).
-
-    Example:
-    {
-        'number': 1,
-        'status': 'completed',
-        'title': 'Example workorder #1',
-        'description': 'Example workorder #1 description',
-        'createdAt': datetime(2025, 11, 6, 17, 20, 19, 867000),
-        'updatedAt': datetime(2025, 11, 6, 17, 20, 19, 867000),
-        'deleted': False
-    }
-    """
+    """Workorder format used by the TracOS system (MongoDB)."""
 
     number: int
     status: str

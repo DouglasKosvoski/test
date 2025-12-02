@@ -1,41 +1,45 @@
-# Read JSON from inbound, write to outbound
-import json
+"""
+Client repository for reading and validating Client workorders.
+"""
 
-from loguru import logger  # pyright: ignore[reportMissingImports]
-from adapters.filesystem import list_json_files_in_directory, read_json_from_file
+import json
 from os import path
-from pathlib import Path
 from datetime import datetime
 from typing import Optional, List
+
+from loguru import logger  # pyright: ignore[reportMissingImports]
+
+from adapters.filesystem import (
+    list_json_files_in_directory,
+    read_json_from_file,
+)
 from integration.types import ClientWorkorder
 
 
 class ClientRepository:
-    def __init__(self):
-        pass
-
     def find_workorders(self, directory_path: str) -> List[dict]:
-        logger.debug(f"Getting workorders from '{directory_path}'")
+        """Load all JSON workorders from a directory, skipping corrupted files."""
+        logger.debug(f"Loading Client workorders from '{directory_path}'")
 
         workorders = []
-
         json_files = list_json_files_in_directory(directory_path)
 
-        for file in json_files:
-            json_file_path = path.join(directory_path, file)
+        for filename in json_files:
+            file_path = path.join(directory_path, filename)
+
             try:
-                workorder = read_json_from_file(json_file_path)
-                workorders.append(workorder)
+                data = read_json_from_file(file_path)
+                workorders.append(data)
+
             except json.JSONDecodeError:
-                logger.error(f"Corrupted JSON file: '{file}'")
-                continue
+                logger.error(f"Invalid JSON in file: '{filename}'")
             except PermissionError:
-                logger.error(f"Permission denied reading file: '{file}'")
-                continue
+                logger.error(f"Permission denied reading file: '{filename}'")
 
         return workorders
 
     def is_iso_datetime(self, value: str) -> bool:
+        """Return True if the given string is a valid ISO datetime."""
         try:
             datetime.fromisoformat(value)
             return True
@@ -43,9 +47,12 @@ class ClientRepository:
             return False
 
     def validate_workorder(self, workorder: dict) -> Optional[ClientWorkorder]:
-        """Validate a workorder from Client format."""
+        """
+        Validate a Client workorder according to the expected schema.
+        Returns a dict if valid, otherwise None.
+        """
 
-        expected_format = {
+        schema = {
             "orderNo": int,
             "isCanceled": bool,
             "isDeleted": bool,
@@ -53,44 +60,41 @@ class ClientRepository:
             "isOnHold": bool,
             "isPending": bool,
             "summary": str,
-            "creationDate": str,  # Datetime fields come as ISO strings from JSON
-            "lastUpdateDate": str,  # Datetime fields come as ISO strings from JSON
-            "deletedDate": str if workorder.get("isDeleted", False) else type(None),  # Optional datetime field
+            "creationDate": "iso-datetime",
+            "lastUpdateDate": "iso-datetime",
+            "deletedDate": "iso-datetime-or-none-when-deleted",
         }
 
-        validated_workorder = {}
+        validated = {}
 
-        for field, expected_type in expected_format.items():
+        for field, rule in schema.items():
+            value = workorder.get(field)
+
             if field not in workorder:
                 logger.warning(f"Workorder missing required field: {field}")
                 return None
 
-            # Special validation for datetime fields
-            if field in ["creationDate", "lastUpdateDate"] and workorder[field] is not None:
-                if not isinstance(workorder[field], str) or not self.is_iso_datetime(workorder[field]):
-                    logger.warning(f"Workorder field {field} is not a valid ISO datetime string")
+            if rule == "iso-datetime":
+                if not (isinstance(value, str) and self.is_iso_datetime(value)):
+                    logger.warning(f"Field '{field}' must be a valid ISO datetime string")
                     return None
-            elif field == "deletedDate":
-                if workorder.get("isDeleted", False):
-                    if workorder[field] is not None and (
-                        not isinstance(workorder[field], str) or not self.is_iso_datetime(workorder[field])
-                    ):
-                        logger.warning(f"Workorder field {field} is not a valid ISO datetime string or None")
+
+            elif rule == "iso-datetime-or-none-when-deleted":
+                is_deleted = workorder.get("isDeleted", False)
+
+                if is_deleted:
+                    if value is not None and not (isinstance(value, str) and self.is_iso_datetime(value)):
+                        logger.warning(f"Field '{field}' must be ISO datetime string or None when deleted")
                         return None
                 else:
-                    if workorder[field] is not None:
-                        logger.warning(f"Workorder field {field} should be None when not deleted")
+                    if value is not None:
+                        logger.warning(f"Field '{field}' must be None when workorder is not deleted")
                         return None
 
-            # Skip type check for datetime fields since we handled them above
-            if field in ["creationDate", "lastUpdateDate", "deletedDate"]:
-                validated_workorder[field] = workorder[field]
-                continue
-
-            if not isinstance(workorder[field], expected_type):
-                logger.warning(f"Workorder field {field} is not of type {expected_type}")
+            elif not isinstance(value, rule):
+                logger.warning(f"Field '{field}' must be of type {rule}")
                 return None
 
-            validated_workorder[field] = workorder[field]
+            validated[field] = value
 
-        return validated_workorder
+        return validated

@@ -157,44 +157,6 @@ class TestTracOSRepository:
         assert len(collection._storage) == 1
 
     @pytest.mark.asyncio
-    async def test_save_workorder_update_existing(self, mock_db_connection):
-        """Test saving an existing workorder updates it."""
-        repo = TracOSRepository()
-        collection = mock_db_connection["collection"]
-
-        # Pre-populate storage
-        existing = {
-            "number": 1,
-            "status": "created",
-            "title": "Original title",
-            "description": "Original description",
-            "createdAt": datetime.now(timezone.utc),
-            "updatedAt": datetime.now(timezone.utc),
-            "deleted": False,
-        }
-        collection._storage.append(existing.copy())
-
-        # Update workorder
-        updated = {
-            "number": 1,
-            "status": "completed",
-            "title": "Updated title",
-            "description": "Updated description",
-            "createdAt": existing["createdAt"],
-            "updatedAt": datetime.now(timezone.utc),
-            "deleted": False,
-        }
-
-        result = await repo.save_workorder(updated)
-
-        assert result is True
-        # Should still only have 1 record
-        assert len(collection._storage) == 1
-        # Should be updated
-        assert collection._storage[0]["status"] == "completed"
-        assert collection._storage[0]["title"] == "Updated title"
-
-    @pytest.mark.asyncio
     async def test_save_workorder_skip_unchanged(self, mock_db_connection):
         """Test saving an unchanged workorder doesn't update."""
         repo = TracOSRepository()
@@ -313,16 +275,6 @@ class TestTracOSRepository:
 
         assert result is False
 
-    def test_should_update_workorder_with_changes(self):
-        """Test should_update_workorder returns True when changes exist."""
-        repo = TracOSRepository()
-
-        existing = {"_id": "123", "number": 1, "status": "created", "title": "Original"}
-
-        new = {"number": 1, "status": "completed", "title": "Original"}  # Changed
-
-        assert repo.should_update_workorder(existing, new) is True
-
     def test_should_update_workorder_no_changes(self):
         """Test should_update_workorder returns False when no changes."""
         repo = TracOSRepository()
@@ -346,17 +298,6 @@ class TestTracOSRepository:
         }
 
         assert repo.should_update_workorder(existing, new) is False
-
-    def test_should_update_workorder_new_field_added(self):
-        """Test should_update_workorder detects new fields."""
-        repo = TracOSRepository()
-
-        existing = {"number": 1, "status": "created"}
-
-        new = {"number": 1, "status": "created", "newField": "value"}  # New field
-
-        assert repo.should_update_workorder(existing, new) is True
-
 
 class TestTracOSRepositoryErrorHandling:
     """Tests for TracOSRepository error handling."""

@@ -1,3 +1,11 @@
+"""
+Database adapter for MongoDB connections.
+
+Provides async connection management for MongoDB with retry logic,
+environment-based configuration and collection access utilities.
+Supports extensible driver configuration for future database backends.
+"""
+
 import asyncio
 from os import getenv
 
@@ -62,6 +70,7 @@ async def get_mongodb_connection_with_retry() -> AsyncIOMotorDatabase:
             if attempt < MAX_RETRIES:
                 await asyncio.sleep(RETRY_DELAY_SECONDS)
 
+    logger.error(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts")
     raise ConnectionError(f"Failed to connect to MongoDB after {MAX_RETRIES} attempts")
 
 

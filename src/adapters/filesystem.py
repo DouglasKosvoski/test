@@ -1,3 +1,11 @@
+"""
+Filesystem adapter for JSON file operations.
+
+Provides utility functions for reading, writing, and listing JSON files
+in directories. Includes error handling for common I/O issues and
+atomic write operations to prevent file corruption.
+"""
+
 import os
 import json
 from pathlib import Path
@@ -83,7 +91,7 @@ def write_json_to_file(file_path: str | Path, data: Any) -> None:
                 pass
         raise
     except TypeError as e:
-        # Data is not JSON serializable - clean up and raise
+        # Data is not JSON serializable, clean up and raise
         if temp_path.exists():
             try:
                 temp_path.unlink()

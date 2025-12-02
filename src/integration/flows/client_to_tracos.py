@@ -1,3 +1,11 @@
+"""
+Client to TracOS synchronization flow.
+
+Orchestrates the synchronization of workorders from the Client file system
+to the TracOS MongoDB database. Reads JSON files from an inbound directory,
+validates them, translates to TracOS format and saves to the database.
+"""
+
 from loguru import logger  # pyright: ignore[reportMissingImports]
 from pathlib import Path
 from integration.system.client.repository import ClientRepository

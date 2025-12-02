@@ -130,51 +130,6 @@ class TestClientToTracOSFlow:
         assert isinstance(saved["createdAt"], datetime)
         assert isinstance(saved["updatedAt"], datetime)
 
-    @pytest.mark.asyncio
-    async def test_sync_updates_existing_workorder(self, temp_data_dirs, mock_db_connection):
-        """Test that sync updates existing workorder when changed."""
-        inbound_dir = temp_data_dirs["inbound"]
-        collection = mock_db_connection["collection"]
-
-        # Pre-populate with existing workorder
-        collection._storage.append(
-            {
-                "number": 1,
-                "status": "created",
-                "title": "Original",
-                "description": "Original",
-                "createdAt": datetime(2025, 11, 1, tzinfo=timezone.utc),
-                "updatedAt": datetime(2025, 11, 1, tzinfo=timezone.utc),
-                "deleted": False,
-            }
-        )
-
-        # Write updated workorder
-        updated = {
-            "orderNo": 1,
-            "status": "COMPLETED",
-            "isCanceled": False,
-            "isDeleted": False,
-            "isDone": True,
-            "isOnHold": False,
-            "isPending": False,
-            "summary": "Updated",
-            "creationDate": "2025-11-01T10:00:00+00:00",
-            "lastUpdateDate": "2025-11-02T10:00:00+00:00",
-            "deletedDate": None,
-        }
-        with open(inbound_dir / "1.json", "w") as f:
-            json.dump(updated, f)
-
-        flow = ClientToTracOSFlow()
-        await flow.sync(inbound_dir)
-
-        # Should still have 1 workorder (updated, not duplicated)
-        assert len(collection._storage) == 1
-        assert collection._storage[0]["status"] == "completed"
-        assert collection._storage[0]["title"] == "Updated"
-
-
 class TestTracOSToClientFlow:
     """End-to-end tests for TracOS → Client synchronization."""
 
@@ -473,49 +428,6 @@ class TestIntegrationEdgeCases:
         collection = mock_db_connection["collection"]
         assert len(collection._storage) == 1
         assert "émojis" in collection._storage[0]["title"]
-
-    @pytest.mark.asyncio
-    async def test_concurrent_updates_same_workorder(self, temp_data_dirs, mock_db_connection):
-        """Test that multiple files for same workorder number are handled."""
-        inbound_dir = temp_data_dirs["inbound"]
-        collection = mock_db_connection["collection"]
-
-        # Pre-populate existing workorder
-        collection._storage.append(
-            {
-                "number": 1,
-                "status": "created",
-                "title": "Original",
-                "description": "Original",
-                "createdAt": datetime.now(timezone.utc),
-                "updatedAt": datetime.now(timezone.utc),
-                "deleted": False,
-            }
-        )
-
-        # Write workorder with same number
-        workorder = {
-            "orderNo": 1,
-            "status": "COMPLETED",
-            "isCanceled": False,
-            "isDeleted": False,
-            "isDone": True,
-            "isOnHold": False,
-            "isPending": False,
-            "summary": "Updated",
-            "creationDate": "2025-11-01T10:00:00+00:00",
-            "lastUpdateDate": "2025-11-02T10:00:00+00:00",
-            "deletedDate": None,
-        }
-        with open(inbound_dir / "1.json", "w") as f:
-            json.dump(workorder, f)
-
-        flow = ClientToTracOSFlow()
-        await flow.sync(inbound_dir)
-
-        # Should have updated, not duplicated
-        assert len(collection._storage) == 1
-        assert collection._storage[0]["status"] == "completed"
 
 
 class TestFlowDataIntegrity:

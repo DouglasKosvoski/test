@@ -292,15 +292,21 @@ def mock_collection():
     _storage: List[Dict] = []
 
     async def mock_find_one(query):
-        for doc in _storage:
+        for i, doc in enumerate(_storage):
             if all(doc.get(k) == v for k, v in query.items()):
+                # Ensure document has _id (mimics real MongoDB behavior)
+                if "_id" not in doc:
+                    doc["_id"] = f"mock_id_{i}"
                 return doc
         return None
 
     async def mock_insert_one(doc):
-        _storage.append(doc.copy())
+        doc_copy = doc.copy()
+        if "_id" not in doc_copy:
+            doc_copy["_id"] = f"mock_id_{len(_storage)}"
+        _storage.append(doc_copy)
         result = MagicMock()
-        result.inserted_id = doc.get("_id", "mock_id")
+        result.inserted_id = doc_copy.get("_id")
         return result
 
     async def mock_update_one(query, update):
